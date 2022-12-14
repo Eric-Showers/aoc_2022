@@ -1,8 +1,7 @@
-file_data = open("exinput.txt").read().splitlines()
+file_data = open("input.txt").read().splitlines()
 # Create 2d array of height values from ord(a) to ord(z).
 # (0,0) is top left, (-1,0) is bottom left.
 height_map = [[0] * len(file_data) for i in range(len(file_data[0]))]
-print(height_map)
 for y, line in enumerate(file_data):
     for x, char in enumerate(line):
         # Capture the start and goal positions.
@@ -11,15 +10,15 @@ for y, line in enumerate(file_data):
             height_map[x][y] = 0
         elif char == 'E':
             goal = [x, y]
-            height_map[x][y] = ord('a') - ord('z')
+            height_map[x][y] = ord('z') - ord('a')
         else:
             height_map[x][y] = ord(char) - ord('a')
 
 
-def print_pos(h_map, pos):
+def print_map(h_map, positions):
     for y in range(len(h_map[0])):
         for x in range(len(h_map)):
-            if x == pos[0] and y == pos[1]:
+            if [x, y] in positions:
                 print("#", end="")
             else:
                 print(file_data[y][x], end="")
@@ -39,7 +38,7 @@ def prioritize_queue(queue, f):
     return sorted(queue, key=lambda x: f[0])
 
 
-actions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+actions = [[0, 1], [0, -1], [1, 0], [-1, 0]]
 
 # Create a priority queue.
 pq = []
@@ -51,7 +50,7 @@ parent = {}
 f = {}
 g = {}
 # Add the start node to the visited dictionary.
-visited = [f"{start[0]},{start[1]}"]
+visited[f"{start[0]},{start[1]}"] = 0
 # Add the start node to the parent dictionary.
 parent[f"{start[0]},{start[1]}"] = None
 # Add the start node to the g dictionary.
@@ -62,8 +61,7 @@ f[f"{start[0]},{start[1]}"] = montreal_distance(start, goal)
 while len(pq) > 0:
     # Remove first node from pq with the highest f value.
     current = pq.pop()[1]
-    #print_pos(height_map, current)
-    #input()
+    curString = f"{current[0]},{current[1]}"
     # If the current node is the goal node.
     if current == goal:
         # Create a list of nodes in the path.
@@ -71,34 +69,35 @@ while len(pq) > 0:
         # While the current node is not the start node.
         while current != start:
             # Add the parent of the current node to the path.
-            path.append(parent[current])
+            path.append(parent[f"{current[0]},{current[1]}"])
             # Set the current node to the parent of the current node.
-            current = parent[current]
+            current = parent[f"{current[0]},{current[1]}"]
         # Return the path.
-        print(len(path))
+        print(len(path)-1)
         break
     # For each action in the list of actions.
     for action in actions:
         # Calculate the new node.
-        new_node = (current[0] + action[0], current[1] + action[1])
+        new_node = [current[0] + action[0], current[1] + action[1]]
         # Check if the new node is in bounds.
         if new_node[0] < 0 or new_node[0] >= len(height_map) or new_node[1] < 0 or new_node[1] >= len(height_map[0]):
             continue
+        # Check if the new node is at most one higher
+        if height_map[new_node[0]][new_node[1]] - height_map[current[0]][current[1]] > 1:
+            continue
         # If the new node is not in the visited dictionary.
         pos_str = f"{new_node[0]},{new_node[1]}"
-        if pos_str not in visited:
-            # Add the new node to the visited dictionary.
-            visited.append(pos_str)
+        if pos_str not in visited or visited[pos_str] > g[curString]+1:
             # Add the new node to the parent dictionary.
             parent[pos_str] = current
             # Add the new node to the g dictionary.
             if pos_str not in g:
-                g[pos_str] = 0
+                g[pos_str] = g[curString]
             g[pos_str] += 1
+            # Add the new node to the visited dictionary.
+            visited[pos_str] = g[pos_str]
             # Add the new node to the f dictionary.
             f.update({pos_str: g[pos_str] + montreal_distance(new_node, goal)})
             # Add the new node to the queue.
             pq.append((f[pos_str], new_node))
             pq.sort(key=lambda x: x[0])
-
-print('oops')
