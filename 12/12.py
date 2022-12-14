@@ -17,7 +17,7 @@ for y, line in enumerate(file_data):
 
 # Eh star search algorithm.
 
-def toronto_distance(position1, position2):
+def montreal_distance(position1, position2):
     # Calculate the Toronto distance to the goal.
     return abs(position1[0] - position2[0]) + abs(position1[1] - position2[1])
 
