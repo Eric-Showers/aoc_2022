@@ -1,21 +1,33 @@
 file_data = open("exinput.txt").read().splitlines()
-# Create 2d array of height values from ord(a) to ord(z). (0,0) is top left, (-1,0) is bottom left.
-height_map = [[0] * len(file_data)] * len(file_data[0])
+# Create 2d array of height values from ord(a) to ord(z).
+# (0,0) is top left, (-1,0) is bottom left.
+height_map = [[0] * len(file_data) for i in range(len(file_data[0]))]
 print(height_map)
-print(file_data)
 for y, line in enumerate(file_data):
-    height_map.append([])
     for x, char in enumerate(line):
-        print(x, y, char)
-        height_map[x][y] = ord(char) - ord('a')
         # Capture the start and goal positions.
-        if char == "S":
+        if char == 'S':
             start = [x, y]
-        elif char == "E":
+            height_map[x][y] = 0
+        elif char == 'E':
             goal = [x, y]
+            height_map[x][y] = ord('a') - ord('z')
+        else:
+            height_map[x][y] = ord(char) - ord('a')
+
+
+def print_pos(h_map, pos):
+    for y in range(len(h_map[0])):
+        for x in range(len(h_map)):
+            if x == pos[0] and y == pos[1]:
+                print("#", end="")
+            else:
+                print(file_data[y][x], end="")
+        print()
 
 
 # Eh star search algorithm.
+
 
 def montreal_distance(position1, position2):
     # Calculate the Toronto distance to the goal.
@@ -39,18 +51,19 @@ parent = {}
 f = {}
 g = {}
 # Add the start node to the visited dictionary.
-visited[f"{start[0]},{start[1]}"] = True
+visited = [f"{start[0]},{start[1]}"]
 # Add the start node to the parent dictionary.
 parent[f"{start[0]},{start[1]}"] = None
 # Add the start node to the g dictionary.
 g[f"{start[0]},{start[1]}"] = 0
 # Add the start node to the f dictionary.
-f[f"{start[0]},{start[1]}"] = toronto_distance(start, goal)
+f[f"{start[0]},{start[1]}"] = montreal_distance(start, goal)
 # While the queue is not empty.
 while len(pq) > 0:
-    print(g)
-    # Get the node with the lowest f value.
-    current = pq[0][1]
+    # Remove first node from pq with the highest f value.
+    current = pq.pop()[1]
+    #print_pos(height_map, current)
+    #input()
     # If the current node is the goal node.
     if current == goal:
         # Create a list of nodes in the path.
@@ -63,24 +76,29 @@ while len(pq) > 0:
             current = parent[current]
         # Return the path.
         print(len(path))
+        break
     # For each action in the list of actions.
     for action in actions:
         # Calculate the new node.
         new_node = (current[0] + action[0], current[1] + action[1])
+        # Check if the new node is in bounds.
+        if new_node[0] < 0 or new_node[0] >= len(height_map) or new_node[1] < 0 or new_node[1] >= len(height_map[0]):
+            continue
         # If the new node is not in the visited dictionary.
-        if new_node not in visited:
+        pos_str = f"{new_node[0]},{new_node[1]}"
+        if pos_str not in visited:
             # Add the new node to the visited dictionary.
-            visited[f"{new_node[0]},{new_node[1]}"] = True
+            visited.append(pos_str)
             # Add the new node to the parent dictionary.
-            parent[f"{new_node[0]},{new_node[1]}"] = current
+            parent[pos_str] = current
             # Add the new node to the g dictionary.
-            print(g)
-            if f"{new_node[0]},{new_node[1]}" not in g:
-                g[f"{new_node[0]},{new_node[1]}"] = 0
-            g[f"{new_node[0]},{new_node[1]}"] += 1
+            if pos_str not in g:
+                g[pos_str] = 0
+            g[pos_str] += 1
             # Add the new node to the f dictionary.
-            f.update({f"{new_node[0]},{new_node[1]}": g[f"{new_node[0]},{new_node[1]}"] + toronto_distance(new_node)})
+            f.update({pos_str: g[pos_str] + montreal_distance(new_node, goal)})
             # Add the new node to the queue.
-            pq.append((f[f"{new_node[0]},{new_node[1]}"], new_node)).sort(key=lambda x: x[0])
+            pq.append((f[pos_str], new_node))
+            pq.sort(key=lambda x: x[0])
 
 print('oops')
